@@ -8,17 +8,49 @@ import Header from "@/components/header"
 
 export default async function HomePage() {
   const supabase = createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
 
-  // If no user, redirect to login
-  if (!user) {
+  let user = null
+  let profile = null
+
+  try {
+    const {
+      data: { user: authUser },
+      error: authError,
+    } = await supabase.auth.getUser()
+
+    if (authError) {
+      console.log("[v0] Auth error on homepage:", authError.message)
+      redirect("/auth/login")
+    }
+
+    user = authUser
+
+    // If no user, redirect to login
+    if (!user) {
+      redirect("/auth/login")
+    }
+
+    // Get user profile data with error handling
+    const { data: profileData, error: profileError } = await supabase
+      .from("users")
+      .select("*")
+      .eq("id", user.id)
+      .single()
+
+    if (profileError && profileError.code !== "PGRST116") {
+      console.log("[v0] Profile fetch error:", profileError.message)
+    }
+
+    profile = profileData
+  } catch (error) {
+    console.log("[v0] Homepage error:", error)
     redirect("/auth/login")
   }
 
-  // Get user profile data
-  const { data: profile } = await supabase.from("users").select("*").eq("id", user.id).single()
+  const handleProfileUpdate = async (updatedProfile: any) => {
+    // This will be handled client-side in the ProfileSettings component
+    console.log("[v0] Profile updated:", updatedProfile)
+  }
 
   return (
     <div className="min-h-screen bg-gray-950">
@@ -51,7 +83,7 @@ export default async function HomePage() {
           </TabsContent>
 
           <TabsContent value="settings">
-            <ProfileSettings user={user} profile={profile} onProfileUpdate={() => {}} />
+            <ProfileSettings user={user} profile={profile} onProfileUpdate={handleProfileUpdate} />
           </TabsContent>
         </Tabs>
       </main>
