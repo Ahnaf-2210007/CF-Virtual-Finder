@@ -350,7 +350,7 @@ export default function ContestBrowser({ userHandle }: ContestBrowserProps) {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredAndSortedContests.map((contest) => (
-            <ContestCard key={contest.id} contest={contest} />
+            <ContestCard key={contest.id} contest={contest} userHandle={userHandle} />
           ))}
         </div>
       )}

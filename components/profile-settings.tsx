@@ -1,12 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
-import { Save, User, ExternalLink } from "lucide-react"
+import { Save, User, ExternalLink, Loader2 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useToast } from "@/hooks/use-toast"
 
@@ -17,15 +17,27 @@ interface ProfileSettingsProps {
 }
 
 export default function ProfileSettings({ user, profile, onProfileUpdate }: ProfileSettingsProps) {
-  const [name, setName] = useState(profile?.name || "")
-  const [codeforcesHandle, setCodeforcesHandle] = useState(profile?.codeforces_handle || "")
+  const [name, setName] = useState("")
+  const [codeforcesHandle, setCodeforcesHandle] = useState("")
   const [loading, setLoading] = useState(false)
+  const [initialLoading, setInitialLoading] = useState(true)
   const { toast } = useToast()
+
+  useEffect(() => {
+    console.log("[v0] Profile data received:", { user, profile })
+    if (profile) {
+      setName(profile.name || "")
+      setCodeforcesHandle(profile.codeforces_handle || "")
+    }
+    setInitialLoading(false)
+  }, [profile])
 
   const handleSave = async () => {
     try {
       setLoading(true)
       const supabase = createClient()
+
+      console.log("[v0] Saving profile data:", { name: name.trim(), codeforces_handle: codeforcesHandle.trim() })
 
       const { data, error } = await supabase
         .from("users")
@@ -38,8 +50,12 @@ export default function ProfileSettings({ user, profile, onProfileUpdate }: Prof
         .select()
         .single()
 
-      if (error) throw error
+      if (error) {
+        console.error("[v0] Profile update error:", error)
+        throw error
+      }
 
+      console.log("[v0] Profile updated successfully:", data)
       onProfileUpdate(data)
       toast({
         title: "Profile updated",
@@ -55,6 +71,32 @@ export default function ProfileSettings({ user, profile, onProfileUpdate }: Prof
     } finally {
       setLoading(false)
     }
+  }
+
+  if (initialLoading) {
+    return (
+      <div className="space-y-6">
+        <Card className="bg-gray-900 border-gray-800">
+          <CardHeader>
+            <CardTitle className="text-white flex items-center">
+              <User className="h-5 w-5 mr-2" />
+              Profile Settings
+            </CardTitle>
+            <CardDescription className="text-gray-400">Loading profile data...</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="space-y-2">
+                  <div className="h-4 bg-gray-800 rounded animate-pulse w-20" />
+                  <div className="h-10 bg-gray-800 rounded animate-pulse" />
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   return (
@@ -76,7 +118,12 @@ export default function ProfileSettings({ user, profile, onProfileUpdate }: Prof
               <Label htmlFor="email" className="text-gray-300">
                 Email
               </Label>
-              <Input id="email" value={user.email} disabled className="bg-gray-800 border-gray-700 text-gray-400" />
+              <Input
+                id="email"
+                value={user?.email || ""}
+                disabled
+                className="bg-gray-800 border-gray-700 text-gray-400"
+              />
               <p className="text-xs text-gray-500">Email cannot be changed</p>
             </div>
 
@@ -147,8 +194,17 @@ export default function ProfileSettings({ user, profile, onProfileUpdate }: Prof
           {/* Save Button */}
           <div className="flex justify-end">
             <Button onClick={handleSave} disabled={loading} className="bg-blue-600 hover:bg-blue-700 text-white">
-              <Save className="h-4 w-4 mr-2" />
-              {loading ? "Saving..." : "Save Changes"}
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Changes
+                </>
+              )}
             </Button>
           </div>
         </CardContent>

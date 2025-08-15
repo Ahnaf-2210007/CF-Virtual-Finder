@@ -16,10 +16,6 @@ Your project is live at:
 
 **[https://virtual-contest-finder.vercel.app](https://virtual-contest-finder.vercel.app)**
 
-## Deployment Management
-
-**[https://vercel.com/ahnaf-2210007s-projects/v0-virtual-contest-finder](https://vercel.com/ahnaf-2210007s-projects/v0-virtual-contest-finder)**
-
 ## Build your app
 
 Continue building your app on:

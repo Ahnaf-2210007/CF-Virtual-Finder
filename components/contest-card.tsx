@@ -3,14 +3,23 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Calendar, Clock, ExternalLink, Trophy } from "lucide-react"
+import { Calendar, Clock, ExternalLink, Trophy, Heart, Plus } from "lucide-react"
 import { type Contest, getContestDifficulty } from "@/lib/codeforces-api"
+import { useState } from "react"
+import { createClient } from "@/lib/supabase/client"
+import { useToast } from "@/hooks/use-toast"
 
 interface ContestCardProps {
   contest: Contest
+  userHandle?: string
 }
 
-export default function ContestCard({ contest }: ContestCardProps) {
+export default function ContestCard({ contest, userHandle }: ContestCardProps) {
+  const [isFavorite, setIsFavorite] = useState(false)
+  const [isAddingToList, setIsAddingToList] = useState(false)
+  const { toast } = useToast()
+  const supabase = createClient()
+
   const difficulty = getContestDifficulty(contest)
   const startDate = contest.startTimeSeconds ? new Date(contest.startTimeSeconds * 1000) : null
   const duration = contest.durationSeconds ? Math.floor(contest.durationSeconds / 3600) : null
@@ -41,12 +50,112 @@ export default function ContestCard({ contest }: ContestCardProps) {
     }
   }
 
+  const handleFavorite = async () => {
+    if (!userHandle) {
+      toast({
+        title: "Login Required",
+        description: "Please login to add favorites",
+        variant: "destructive",
+      })
+      return
+    }
+
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) return
+
+      if (isFavorite) {
+        // Remove from favorites
+        await supabase.from("contest_favorites").delete().eq("user_id", user.id).eq("contest_id", contest.id)
+
+        setIsFavorite(false)
+        toast({
+          title: "Removed from favorites",
+          description: `${contest.name} removed from your favorites`,
+        })
+      } else {
+        // Add to favorites
+        await supabase.from("contest_favorites").insert({
+          user_id: user.id,
+          contest_id: contest.id,
+          contest_name: contest.name,
+          contest_type: contest.type,
+        })
+
+        setIsFavorite(true)
+        toast({
+          title: "Added to favorites",
+          description: `${contest.name} added to your favorites`,
+        })
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update favorites",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleAddToList = async () => {
+    if (!userHandle) {
+      toast({
+        title: "Login Required",
+        description: "Please login to track contests",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setIsAddingToList(true)
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) return
+
+      await supabase.from("virtual_contests").insert({
+        user_id: user.id,
+        contest_id: contest.id,
+        contest_name: contest.name,
+        problems_solved: 0,
+        total_problems: 0, // Will be updated when user provides details
+        status: "planned",
+      })
+
+      toast({
+        title: "Added to your list",
+        description: `${contest.name} added to your contest tracking list`,
+      })
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add contest to list",
+        variant: "destructive",
+      })
+    } finally {
+      setIsAddingToList(false)
+    }
+  }
+
   return (
     <Card className="bg-gray-900 border-gray-800 hover:border-gray-700 transition-colors">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <CardTitle className="text-white text-lg leading-tight line-clamp-2">{contest.name}</CardTitle>
-          <Badge className={`ml-2 ${getTypeColor(contest.type)} border`}>{contest.type}</Badge>
+          <div className="flex items-center gap-2">
+            <Badge className={`${getTypeColor(contest.type)} border`}>{contest.type}</Badge>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleFavorite}
+              className={`p-1 h-8 w-8 ${isFavorite ? "text-red-400 hover:text-red-300" : "text-gray-400 hover:text-red-400"}`}
+            >
+              <Heart className={`h-4 w-4 ${isFavorite ? "fill-current" : ""}`} />
+            </Button>
+          </div>
         </div>
         <div className="flex items-center gap-2 mt-2">
           <Badge className={`${getDifficultyColor(difficulty)} border`}>{difficulty}</Badge>
@@ -57,7 +166,6 @@ export default function ContestCard({ contest }: ContestCardProps) {
       </CardHeader>
 
       <CardContent className="space-y-4">
-        {/* Contest Details */}
         <div className="space-y-2 text-sm">
           {startDate && (
             <div className="flex items-center text-gray-400">
@@ -101,6 +209,16 @@ export default function ContestCard({ contest }: ContestCardProps) {
             <a href={`https://codeforces.com/contest/${contest.id}/virtual`} target="_blank" rel="noopener noreferrer">
               Virtual
             </a>
+          </Button>
+
+          <Button
+            onClick={handleAddToList}
+            disabled={isAddingToList}
+            variant="outline"
+            className="border-green-700 text-green-300 hover:bg-green-800 bg-transparent"
+            size="sm"
+          >
+            <Plus className="h-4 w-4" />
           </Button>
         </div>
       </CardContent>
