@@ -1,30 +1,30 @@
-# Virtual contest finder
+# Virtual Contest Finder
 
-*Automatically synced with your [v0.app](https://v0.app) deployments*
-
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://virtual-contest-finder.vercel.app)
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0.app-black?style=for-the-badge)](https://v0.app/chat/projects/IyQpAzJ21sd)
+A web application to help users find and participate in virtual programming contests on Codeforces.
 
 ## Overview
 
-This repository will stay in sync with your deployed chats on [v0.app](https://v0.app).
-Any changes you make to your deployed app will be automatically pushed to this repository from [v0.app](https://v0.app).
+This project allows users to search for virtual contests, filter by difficulty and rating, and track their progress. Built as part of a course project to demonstrate full-stack web development skills.
 
-## Deployment
+## Features
 
-Your project is live at:
+- Browse virtual contests from Codeforces
+- Filter contests by rating and difficulty
+- User-friendly interface for contest discovery
+- Real-time contest data integration
 
-**[https://virtual-contest-finder.vercel.app](https://virtual-contest-finder.vercel.app)**
+## Technologies Used
 
-## Build your app
+- React/Next.js for frontend
+- Modern JavaScript/TypeScript
+- Responsive design
+- API integration with Codeforces
 
-Continue building your app on:
+## Getting Started
 
-**[https://v0.app/chat/projects/IyQpAzJ21sd](https://v0.app/chat/projects/IyQpAzJ21sd)**
+1. Clone this repository
+2. Install dependencies: `npm install`
+3. Run the development server: `npm run dev`
+4. Open [http://localhost:3000](http://localhost:3000) in your browser
 
-## How It Works
-
-1. Create and modify your project using [v0.app](https://v0.app)
-2. Deploy your chats from the v0 interface
-3. Changes are automatically pushed to this repository
-4. Vercel deploys the latest version from this repository
+## Project Structure
